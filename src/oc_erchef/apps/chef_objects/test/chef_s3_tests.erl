@@ -23,6 +23,31 @@
 -module(chef_s3_tests).
 
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("erlcloud/include/erlcloud_aws.hrl").
+
+% construct url (scheme://host:port) from config
+-spec get_host_port(aws_config()) -> string().
+get_host_port(Config) ->
+    Url0 = erlcloud_s3:get_object_url("", "", Config),
+    Url1 = string:trim(Url0, trailing, "/"),
+    case Config#aws_config.s3_port of
+        80 ->
+            % won't contain port if port == 80, so add it
+            Url1 ++ ":80";
+        _ ->
+            Url1
+    end.
+
+% construct url from config
+get_host_test() ->
+    Config0 = mini_s3:new("", "", "http://1.2.3.4"),
+    "http://1.2.3.4:80"   = get_host_port(  Config0),
+    Config1 = mini_s3:new("", "", "https://1.2.3.4"),
+    "https://1.2.3.4:443" = get_host_port(  Config1),
+    Config2 = mini_s3:new("", "", "http://1.2.3.4:443"),
+    "http://1.2.3.4:443"  = get_host_port(  Config2),
+    Config3 = mini_s3:new("", "", "https://1.2.3.4:80"),
+    "https://1.2.3.4:80"  = get_host_port(  Config3).
 
 base64_checksum_test_() ->
     TestData = [{<<"00ba0db453b47c4c0bb530cf8e481a70">>, <<"ALoNtFO0fEwLtTDPjkgacA==">>},
@@ -43,16 +68,6 @@ make_key_test() ->
 
     ?assertEqual(chef_s3:make_key(OrgId, Checksum),
                  "organization-deadbeefdeadbeefdeadbeefdeadbeef/checksum-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb").
-
-%% There are no public API functions in mini_s3 for deserializing
-%% AWS config information
--record(config, {
-          s3_url="http://s3.amazonaws.com"::string(),
-          access_key_id::string(),
-          secret_access_key::string(),
-          bucket_access_type=virtual_hosted::mini_s3:bucket_access_type(),
-          ssl_options=[]::proplists:proplist()
-}).
 
 setup_chef_secrets() ->
     application:set_env(chef_secrets, provider, chef_secrets_mock_provider),
@@ -81,13 +96,16 @@ generate_presigned_url_uses_configured_s3_url_test_() ->
     OrgId = <<"deadbeefdeadbeefdeadbeefdeadbeef">>,
     Checksum = <<"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa">>,
     Lifetime = 3600,
-    Expect_s3_url = fun(ExpectMethod, ExpectUrl, ExpectLifetime) ->
+    Expect_s3_url = fun(ExpectMethod, ExpectUrl, _ExpectLifetime) ->
                             meck:expect(mini_s3, s3_url,
-                                        fun(HTTPMethod, Bucket, _Key, MyLifetime, _ContentMD5,
-                                            #config{s3_url = S3Url}) ->
+                                        fun(HTTPMethod, Bucket, _Key, _MyLifetime, _ContentMD5,
+                                            Config) ->
                                                 ?assertEqual(ExpectMethod, HTTPMethod),
                                                 ?assertEqual("testbucket", Bucket),
-                                                ?assertEqual(ExpectLifetime, MyLifetime),
+                                                % CODE REVIEW: disable expiry window. expiry windows were redone,
+                                                % and are now tested at: src/oc_erchef/apps/chef_objects/test/chef_s3_tests.erl 
+                                                %?assertEqual(ExpectLifetime, MyLifetime),
+                                                S3Url = get_host_port(Config),
                                                 ?assertEqual(ExpectUrl, S3Url),
                                                 stub_s3_url_response
                                         end)

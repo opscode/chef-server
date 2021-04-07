@@ -211,6 +211,8 @@
         <% else -%>
         {s3_url, "<%= @helper.bookshelf_s3_url %>"},
         <% end %>
+        % could also call this url_style or bookshelf_url_style or s3_url_style or whatever
+        {path_or_vhost, <%= node['private_chef']['bookshelf']['enable'] ? 'path' : 'vhost' %>},
         {s3_external_url, <%= @helper.erl_atom_or_string(node['private_chef']['bookshelf']['external_url']) %>},
         {s3_platform_bucket_name, "<%= node['private_chef']['opscode-erchef']['s3_bucket'] %>"},
         {s3_url_ttl, <%= node['private_chef']['opscode-erchef']['s3_url_ttl'] %>},

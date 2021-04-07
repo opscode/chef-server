@@ -154,7 +154,8 @@ get_external_config(VHostUrl) ->
 aws_config(S3Url) ->
     S3AccessKeyId =  envy:get(chef_objects, s3_access_key_id, string),
     S3SecretKeyId =  envy:get(chef_objects, s3_secret_key_id, string),
-    mini_s3:new(S3AccessKeyId, S3SecretKeyId, S3Url, path).
+    PathOrVhost   =  envy:get(chef_objects, path_or_vhost, atom),
+    mini_s3:new(S3AccessKeyId, S3SecretKeyId, S3Url, PathOrVhost).
 
 %% @doc returns a url for accessing s3 internally. This is used
 %% to contact bookshelf or S3.
