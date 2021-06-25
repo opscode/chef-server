@@ -724,7 +724,7 @@ This configuration file has the following settings for `nginx`:
     Starting with Chef Infra Server 14.3, this value defaults to `'TLSv1.2'` for
     enhanced security. Previous releases defaulted to `'TLSv1 TLSv1.1 TLSv1.2'`,
     which allowed for less secure SSL connections. TLS 1.2 is supported on
-    Chef Infra Client 10.16.4 and later on Linux, Unix, and macOS, and on Chef 
+    Chef Infra Client 10.16.4 and later on Linux, Unix, and macOS, and on Chef
     Infra Client 12.8 and later on Windows. If it is necessary to support these older end-of-life
     Chef Infra Client releases, set this value to `'TLSv1.1 TLSv1.2'`.
 
@@ -820,6 +820,14 @@ This configuration file has the following settings for `nginx`:
 :   Time duration in seconds till which the browser caches the `HSTS` information.
     Possible values: greater than or equal to `31536000` and less than or equal to `63072000`.
     Default value: `31536000` (1 year).
+
+`user['nginx_no_root']`
+
+:   Boolean, default `false`.  Specifies that `nginx` processes, including the `master` process, should not
+    run as the `root` user on a system and will instead run as `user['username']` (defaults to `opscode`).
+    **REQUIRES** that `nginx['ssl_port']` and `nginx['non_ssl_port']` options are configured to non-privileged
+    ports greater than `1024` or that the local system is otherwise allowed to bind to privileged ports
+    with the user `user['username']`.
 
 ### oc_bifrost
 
