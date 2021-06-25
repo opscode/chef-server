@@ -821,13 +821,15 @@ This configuration file has the following settings for `nginx`:
     Possible values: greater than or equal to `31536000` and less than or equal to `63072000`.
     Default value: `31536000` (1 year).
 
-`user['nginx_no_root']`
+`nginx['nginx_no_root']`
 
 :   Boolean, default `false`.  Specifies that `nginx` processes, including the `master` process, should not
     run as the `root` user on a system and will instead run as `user['username']` (defaults to `opscode`).
     **REQUIRES** that `nginx['ssl_port']` and `nginx['non_ssl_port']` options are configured to non-privileged
     ports greater than `1024` or that the local system is otherwise allowed to bind to privileged ports
     with the user `user['username']`.
+
+    **New in Chef Infra Server 14.6**
 
 ### oc_bifrost
 
